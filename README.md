@@ -35,6 +35,15 @@ This project includes a serverless endpoint at `api/analyze.js`. When deployed
 to Vercel with `OPENAI_API_KEY` configured, the app calls OpenAI's Responses API
 and requests strict JSON output for the analysis report.
 
+It also includes `api/health.js`, which can be checked after deployment:
+
+```text
+/api/health
+```
+
+The health endpoint reports whether Vercel can see the `OPENAI_API_KEY`
+environment variable without revealing the key.
+
 When the app is opened from `file://` or when the API key is not configured, it
 falls back to the local prototype analyzer so the demo still works.
 
