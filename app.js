@@ -145,7 +145,7 @@ runTestCase.addEventListener("click", () => {
   const testCase = getSelectedTestCase();
   fillFormFromCase(testCase);
   renderExpectedBehavior(testCase);
-  const analysis = buildReport({
+  runAnalysis({
     summary: testCase.dispute,
     argumentA: testCase.argumentA,
     argumentB: testCase.argumentB,
@@ -153,7 +153,6 @@ runTestCase.addEventListener("click", () => {
     lens: testCase.lens || "none",
     seriousness: "relationship",
   });
-  observedSummary.innerHTML = renderObservedSummary(analysis);
 });
 
 form.addEventListener("submit", (event) => {
