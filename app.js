@@ -212,7 +212,7 @@ async function analyzeWithApi(data) {
   const json = await response.json();
 
   if (!response.ok) {
-    throw new Error(json.error || "API analysis unavailable.");
+    throw new Error(json.detail || json.error || "API analysis unavailable.");
   }
 
   return normalizeApiAnalysis(json.analysis);
