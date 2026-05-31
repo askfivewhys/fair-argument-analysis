@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fair Argument Analysis</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="intro" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">AI showcase prototype</p>
+          <h1 id="app-title">Fair Argument Analysis</h1>
+          <p class="lede">
+            A private AI-assisted tool for disputes where a crowd vote is not enough.
+            It evaluates reasoning first, flags harmful argument patterns, and then
+            applies psychology-informed judgment to valid arguments.
+          </p>
+        </div>
+        <aside class="summary-panel" aria-label="Prototype summary">
+          <span class="status-dot"></span>
+          <strong>Prototype mode</strong>
+          <p>
+            This demo uses the same structure intended for an LLM response, with
+            local sample analysis so the project can be reviewed instantly.
+          </p>
+        </aside>
+      </section>
+
+      <section class="workspace" aria-label="Argument analysis workspace">
+        <form id="analysis-form" class="input-panel">
+          <div class="panel-heading">
+            <p class="eyebrow">Input</p>
+            <h2>Describe the disagreement</h2>
+          </div>
+
+          <label>
+            Dispute summary
+            <textarea
+              id="summary"
+              name="summary"
+              rows="3"
+              placeholder="Example: Two partners disagree about whether one partner should be allowed to go through the other's phone after trust was damaged."
+            ></textarea>
+          </label>
+
+          <div class="argument-grid">
+            <label>
+              Argument A
+              <textarea
+                id="argument-a"
+                name="argumentA"
+                rows="7"
+                placeholder="Write the first person's argument here."
+              ></textarea>
+            </label>
+
+            <label>
+              Argument B
+              <textarea
+                id="argument-b"
+                name="argumentB"
+                rows="7"
+                placeholder="Write the second person's argument here."
+              ></textarea>
+            </label>
+          </div>
+
+          <label>
+            Agreed facts
+            <textarea
+              id="facts"
+              name="facts"
+              rows="3"
+              placeholder="List facts both people agree are true."
+            ></textarea>
+          </label>
+
+          <div class="controls-row">
+            <label>
+              Optional preselected lens
+              <select id="lens" name="lens">
+                <option value="none">None: psychology default</option>
+                <option value="christian-marriage">Christian marriage</option>
+                <option value="stoic">Stoic philosophy</option>
+                <option value="custom-values">Custom values</option>
+              </select>
+            </label>
+
+            <label>
+              Seriousness
+              <select id="seriousness" name="seriousness">
+                <option value="relationship">Relationship conflict</option>
+                <option value="family">Family disagreement</option>
+                <option value="work">Workplace issue</option>
+                <option value="everyday">Everyday decision</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button type="submit">Analyze arguments</button>
+            <button type="button" id="load-sample" class="secondary">Load sample</button>
+          </div>
+        </form>
+
+        <section class="result-panel" aria-live="polite" aria-labelledby="result-title">
+          <div class="panel-heading">
+            <p class="eyebrow">Output</p>
+            <h2 id="result-title">Analysis report</h2>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            Enter two arguments or load the sample to generate a structured report.
+          </div>
+
+          <div id="report" class="report" hidden></div>
+        </section>
+      </section>
+
+      <section class="test-panel" aria-labelledby="test-title">
+        <div class="panel-heading">
+          <p class="eyebrow">Review</p>
+          <h2 id="test-title">Test cases</h2>
+          <p>
+            Load a case to compare the prototype's observed analysis with the
+            expected behavior defined for the model.
+          </p>
+        </div>
+
+        <div class="test-case-grid">
+          <label>
+            Scenario
+            <select id="test-case-select"></select>
+          </label>
+
+          <div class="button-row test-actions">
+            <button type="button" id="load-test-case">Load case</button>
+            <button type="button" id="run-test-case" class="secondary">
+              Run selected case
+            </button>
+          </div>
+        </div>
+
+        <div class="expectation-grid">
+          <article>
+            <h3>Expected behavior</h3>
+            <div id="expected-behavior" class="expectation-list">
+              Select a case to review the expected behavior.
+            </div>
+          </article>
+          <article>
+            <h3>Observed summary</h3>
+            <div id="observed-summary" class="expectation-list">
+              Run a case to summarize the current prototype result.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="showcase-notes" aria-label="Showcase explanation">
+        <article>
+          <h2>What I built</h2>
+          <p>
+            A prototype for an AI dispute-analysis workflow that separates invalid
+            reasoning from valid disagreement before making a recommendation.
+          </p>
+        </article>
+        <article>
+          <h2>How AI is used</h2>
+          <p>
+            The intended model call uses a strict rubric and JSON schema to return
+            validity checks, harmful-pattern flags, psychology-informed analysis,
+            and unresolved assumptions.
+          </p>
+        </article>
+        <article>
+          <h2>What I learned</h2>
+          <p>
+            AI is more useful in sensitive disagreement when it is constrained by
+            transparent rules, privacy defaults, and clear separation between
+            argument patterns and personal character.
+          </p>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

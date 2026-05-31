@@ -1,0 +1,11 @@
+{
+  "name": "fair-argument-analysis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "serve": "python3 -m http.server 4173",
+    "check": "node --check app.js && node --check api/analyze.js && node -e \"JSON.parse(require('fs').readFileSync('test_cases.json','utf8')); console.log('test_cases.json valid')\""
+  }
+}
