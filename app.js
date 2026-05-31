@@ -179,6 +179,8 @@ async function runAnalysis(data) {
     observedSummary.innerHTML = renderObservedSummary(analysis);
   } catch (error) {
     const fallback = analyzeLocally(data);
+    fallback.apiStatus =
+      "AI endpoint unavailable in this run; showing local prototype fallback.";
     renderAnalysis(fallback, "Local prototype fallback");
     observedSummary.innerHTML = renderObservedSummary(fallback);
     console.info("Using local fallback:", error.message);
@@ -715,6 +717,11 @@ function renderReport(analysis, sourceLabel = "Local prototype analysis") {
       </div>
       <h3>Dispute summary</h3>
       <p>${escapeHtml(analysis.summary)}</p>
+      ${
+        analysis.apiStatus
+          ? `<p class="api-status">${escapeHtml(analysis.apiStatus)}</p>`
+          : ""
+      }
     </article>
 
     ${renderArgument("Argument A", analysis.argumentA)}

@@ -118,7 +118,7 @@ Rules:
 Return JSON only according to the schema.
 `;
 
-export default async function handler(request, response) {
+module.exports = async function handler(request, response) {
   if (request.method !== "POST") {
     return response.status(405).json({ error: "Method not allowed" });
   }
@@ -130,7 +130,10 @@ export default async function handler(request, response) {
   }
 
   try {
-    const body = request.body || {};
+    let body = request.body || {};
+    if (!body || typeof body === "string") {
+      body = await readJsonBody(request);
+    }
     const payload =
       typeof body === "string" && body.length ? JSON.parse(body) : body;
 
@@ -196,6 +199,28 @@ export default async function handler(request, response) {
       detail: error instanceof Error ? error.message : "Unknown error.",
     });
   }
+}
+
+function readJsonBody(request) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    request.on("data", (chunk) => {
+      data += chunk;
+    });
+    request.on("end", () => {
+      if (!data) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(data));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    request.on("error", reject);
+  });
 }
 
 function extractOutputText(apiResponse) {

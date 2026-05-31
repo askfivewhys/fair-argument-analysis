@@ -236,6 +236,11 @@ button.secondary:hover {
   line-height: 1.55;
 }
 
+.api-status {
+  border-left: 3px solid var(--warning);
+  padding-left: 10px;
+}
+
 .report-card p:last-child,
 .report-card ul:last-child {
   margin-bottom: 0;
