@@ -392,3 +392,36 @@ button.secondary:hover {
     padding: 16px;
   }
 }
+
+a {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+a:hover {
+  color: var(--accent-dark);
+}
+
+.showcase-page .intro {
+  align-items: start;
+}
+
+.showcase-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.showcase-detail article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.showcase-detail p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 1.03rem;
+  line-height: 1.65;
+}

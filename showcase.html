@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Showcase | Fair Argument Analysis</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell showcase-page">
+      <section class="intro" aria-labelledby="showcase-title">
+        <div>
+          <p class="eyebrow">Project showcase</p>
+          <h1 id="showcase-title">Fair Argument Analysis</h1>
+          <p class="lede">
+            A private AI-assisted prototype that helps users review serious
+            disagreements by separating invalid reasoning, harmful patterns, and
+            psychology-informed judgment.
+          </p>
+        </div>
+        <aside class="summary-panel" aria-label="Project links">
+          <strong>Project links</strong>
+          <p>
+            <a href="/">Open the live prototype</a>
+          </p>
+          <p>
+            <a href="https://github.com/askfivewhys/fair-argument-analysis"
+              >View the GitHub repository</a
+            >
+          </p>
+        </aside>
+      </section>
+
+      <section class="showcase-detail" aria-label="Showcase details">
+        <article>
+          <h2>Short Description</h2>
+          <p>
+            Fair Argument Analysis is a private AI-assisted prototype that helps
+            users review serious disagreements. It evaluates each argument
+            separately, rejects invalid or harmful reasoning patterns, and uses
+            psychology-informed criteria as the default tie-breaker when valid
+            arguments remain.
+          </p>
+        </article>
+
+        <article>
+          <h2>What I Built</h2>
+          <p>
+            I built a browser-based prototype with an argument intake form,
+            sample dispute, structured analysis report, supporting model
+            specification, and a test-case review panel. The app shows how an AI
+            system can separate popularity, logic, emotional safety, and
+            psychology-informed reasoning.
+          </p>
+        </article>
+
+        <article>
+          <h2>How I Used AI</h2>
+          <p>
+            AI was used to design the evaluation framework, define safety and
+            validity categories, draft the model prompt, and build the working
+            prototype. The deployed version uses a server-side OpenAI Responses
+            API endpoint with strict JSON output to return validity checks,
+            harmful-pattern flags, psychology-informed analysis,
+            recommendations, confidence, and unresolved assumptions.
+          </p>
+        </article>
+
+        <article>
+          <h2>What I Learned</h2>
+          <p>
+            I learned that a useful AI dispute tool should not simply choose a
+            winner. It needs a careful decision architecture: safety screen
+            first, validity gate second, psychology-informed comparison third,
+            and optional worldview lenses only when selected before analysis
+            begins.
+          </p>
+        </article>
+
+        <article>
+          <h2>Future Direction</h2>
+          <p>
+            The serious analysis tool could remain free and private, while a
+            separate casual crowd-vote product could support the ecosystem
+            through lightweight A/B decisions, age-group sentiment, and
+            participation-based access.
+          </p>
+        </article>
+
+        <article>
+          <h2>Privacy Note</h2>
+          <p>
+            This prototype does not include account creation or a database.
+            Hosted AI analysis is sent to the serverless API only to generate the
+            report. A production version should add clearer retention controls,
+            deletion options, and consent language before accepting sensitive
+            real-world disputes.
+          </p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
