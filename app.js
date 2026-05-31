@@ -179,7 +179,7 @@ async function runAnalysis(data) {
   } catch (error) {
     const fallback = analyzeLocally(data);
     fallback.apiStatus =
-      "AI endpoint unavailable in this run; showing local prototype fallback.";
+      `AI endpoint unavailable in this run; showing local prototype fallback. Reason: ${error.message}`;
     renderAnalysis(fallback, "Local prototype fallback");
     observedSummary.innerHTML = renderObservedSummary(fallback);
     console.info("Using local fallback:", error.message);
