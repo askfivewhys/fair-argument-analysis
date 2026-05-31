@@ -114,6 +114,10 @@ Rules:
 10. Apply optional religious, philosophical, cultural, or values-based lenses
    only if selected before analysis.
 11. State unresolved assumptions and confidence.
+12. Scores must use the full 0-100 scale. A strong valid argument should usually
+   score 70-95. A mixed but usable argument should usually score 45-70. A weak,
+   invalid, or harmful argument should usually score below 45. Do not use a 0-10
+   scale.
 
 Return JSON only according to the schema.
 `;
