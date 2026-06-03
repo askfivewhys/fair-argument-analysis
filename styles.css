@@ -121,6 +121,24 @@ h2 {
   align-items: start;
 }
 
+.mode-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.mode-button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
+.mode-button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .input-panel,
 .result-panel,
 .test-panel {
@@ -129,6 +147,18 @@ h2 {
 
 .panel-heading {
   margin-bottom: 18px;
+}
+
+.form-note,
+.privacy-note {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.privacy-note {
+  border-left: 3px solid var(--warning);
+  padding-left: 10px;
 }
 
 label {
@@ -288,6 +318,22 @@ button.secondary:hover {
 .score strong {
   display: block;
   font-size: 1.25rem;
+}
+
+.pattern-list {
+  display: grid;
+  gap: 12px;
+}
+
+.pattern-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface-soft);
+}
+
+.pattern-item h4 {
+  margin: 0 0 8px;
 }
 
 .showcase-notes {

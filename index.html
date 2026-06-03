@@ -13,9 +13,10 @@
           <p class="eyebrow">AI showcase prototype</p>
           <h1 id="app-title">Fair Argument Analysis</h1>
           <p class="lede">
-            A private AI-assisted tool for disputes where a crowd vote is not enough.
-            It evaluates reasoning first, flags harmful argument patterns, and then
-            applies psychology-informed judgment to valid arguments.
+            A private AI-assisted tool for disputes where a crowd vote is not
+            enough. It evaluates reasoning, reviews confusing messages, and
+            flags harmful communication patterns without judging a person's
+            character.
           </p>
         </div>
         <aside class="summary-panel" aria-label="Prototype summary">
@@ -26,6 +27,15 @@
             local sample analysis so the project can be reviewed instantly.
           </p>
         </aside>
+      </section>
+
+      <section class="mode-panel" aria-label="Analysis mode">
+        <button type="button" class="mode-button active" data-mode="argument">
+          Two-argument analysis
+        </button>
+        <button type="button" class="mode-button" data-mode="pattern">
+          Conversation pattern review
+        </button>
       </section>
 
       <section class="workspace" aria-label="Argument analysis workspace">
@@ -102,6 +112,73 @@
           <div class="button-row">
             <button type="submit">Analyze arguments</button>
             <button type="button" id="load-sample" class="secondary">Load sample</button>
+          </div>
+        </form>
+
+        <form id="pattern-form" class="input-panel" hidden>
+          <div class="panel-heading">
+            <p class="eyebrow">Private review</p>
+            <h2>Review a conversation or message</h2>
+            <p class="form-note">
+              This mode reviews communication patterns, not personal character.
+              It can analyze a full transcript or one confusing statement when
+              you are not sure whether it is a valid point, an insult, or a
+              pressure tactic.
+            </p>
+          </div>
+
+          <div class="controls-row">
+            <label>
+              Review type
+              <select id="review-type" name="reviewType">
+                <option value="conversation">Conversation transcript</option>
+                <option value="single-message">One-sided message or argument</option>
+              </select>
+            </label>
+
+            <label>
+              Relationship context
+              <select id="review-context" name="reviewContext">
+                <option value="relationship">Romantic relationship</option>
+                <option value="family">Family</option>
+                <option value="friendship">Friendship</option>
+                <option value="work">Workplace</option>
+                <option value="unspecified">Prefer not to specify</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Text to review
+            <textarea
+              id="review-text"
+              name="reviewText"
+              rows="12"
+              placeholder="Paste a text exchange, or one message that left you feeling confused, insulted, pressured, or unsure how to respond."
+            ></textarea>
+          </label>
+
+          <label>
+            Optional context
+            <textarea
+              id="review-notes"
+              name="reviewNotes"
+              rows="3"
+              placeholder="Add any context that may matter, such as recent conflict, repeated patterns, or what confused you."
+            ></textarea>
+          </label>
+
+          <p class="privacy-note">
+            Safety note: if someone monitors your device, accounts, or browser
+            history, consider using a safer device before pasting sensitive
+            conversations.
+          </p>
+
+          <div class="button-row">
+            <button type="submit">Review patterns</button>
+            <button type="button" id="load-pattern-sample" class="secondary">
+              Load sample
+            </button>
           </div>
         </form>
 

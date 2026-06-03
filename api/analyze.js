@@ -84,6 +84,54 @@ const analysisSchema = {
   },
 };
 
+const patternReviewSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "summary",
+    "reviewType",
+    "severity",
+    "patterns",
+    "validConcern",
+    "insultOrArgument",
+    "confusionFactors",
+    "saferNextSteps",
+    "safetyConsiderations",
+    "confidence",
+    "unresolvedAssumptions",
+  ],
+  properties: {
+    summary: { type: "string" },
+    reviewType: { type: "string", enum: ["conversation", "single-message"] },
+    severity: { type: "string", enum: ["low", "concerning", "high", "urgent"] },
+    patterns: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "severity", "explanation", "examples", "possibleImpact"],
+        properties: {
+          name: { type: "string" },
+          severity: {
+            type: "string",
+            enum: ["mild", "concerning", "high", "urgent"],
+          },
+          explanation: { type: "string" },
+          examples: { type: "array", items: { type: "string" } },
+          possibleImpact: { type: "string" },
+        },
+      },
+    },
+    validConcern: { type: "string" },
+    insultOrArgument: { type: "string" },
+    confusionFactors: { type: "array", items: { type: "string" } },
+    saferNextSteps: { type: "array", items: { type: "string" } },
+    safetyConsiderations: { type: "string" },
+    confidence: { type: "string", enum: ["low", "moderate", "high"] },
+    unresolvedAssumptions: { type: "array", items: { type: "string" } },
+  },
+};
+
 const systemPrompt = `
 You are a fair argument analysis assistant. Evaluate argument patterns, not the
 speaker's character.
@@ -122,6 +170,36 @@ Rules:
 Return JSON only according to the schema.
 `;
 
+const patternReviewPrompt = `
+You are a non-judgmental communication pattern reviewer. Evaluate the text, not
+the moral worth, diagnosis, intent, or identity of any person.
+
+Purpose:
+- Help a confused user understand whether a conversation or one message contains
+  patterns associated with emotional abuse, coercive control, gaslighting-like
+  confusion, DARVO, blame-shifting, contempt, intimidation, guilt pressure,
+  isolation, monitoring, or manipulation-like pressure.
+- Also identify any potentially valid concern underneath the message so the
+  analysis is fair and not one-sided.
+
+Rules:
+1. Do not declare that a person is abusive, malicious, narcissistic, or toxic.
+   Identify communication patterns only.
+2. If the text is one-sided, say what can and cannot be inferred from one
+   message.
+3. Distinguish a valid argument from an insult, invalidation, threat, pressure
+   tactic, or unsupported accusation.
+4. Explain why the message may feel confusing to the recipient.
+5. Include safer next steps that prioritize clarity, boundaries, privacy, and
+   support. Do not encourage continued debate if the exchange is threatening,
+   degrading, circular, or unsafe.
+6. Include privacy and safety considerations if the text suggests monitoring,
+   fear, threats, isolation, or coercive control.
+7. If immediate danger, self-harm, or violence is present, mark severity urgent
+   and advise contacting emergency/local crisis support.
+8. Return JSON only according to the schema.
+`;
+
 module.exports = async function handler(request, response) {
   if (request.method !== "POST") {
     return response.status(405).json({ error: "Method not allowed" });
@@ -150,47 +228,42 @@ module.exports = async function handler(request, response) {
       seriousness: payload.seriousness || "relationship",
     };
 
-    const apiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    if (payload.analysisMode === "pattern_review") {
+      const reviewInput = {
+        reviewType: payload.reviewType || "conversation",
+        reviewContext: payload.reviewContext || "unspecified",
+        text: payload.reviewText || "",
+        notes: payload.reviewNotes || "",
+      };
+
+      const analysis = await requestStructuredAnalysis({
+        schema: patternReviewSchema,
+        schemaName: "conversation_pattern_review",
+        systemPrompt: patternReviewPrompt,
+        userContent: `Review this text as JSON:\n${JSON.stringify(
+          reviewInput,
+          null,
+          2
+        )}`,
+      });
+
+      return response.status(200).json({
+        source: "openai",
         model: MODEL,
-        input: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: `Analyze this dispute as JSON:\n${JSON.stringify(
-              input,
-              null,
-              2
-            )}`,
-          },
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "fair_argument_analysis",
-            strict: true,
-            schema: analysisSchema,
-          },
-        },
-      }),
-    });
-
-    const json = await apiResponse.json();
-
-    if (!apiResponse.ok) {
-      return response.status(apiResponse.status).json({
-        error: "OpenAI request failed.",
-        detail: json.error?.message || "Unknown API error.",
+        analysis,
       });
     }
 
-    const outputText = extractOutputText(json);
-    const analysis = JSON.parse(outputText);
+    const analysis = await requestStructuredAnalysis({
+      schema: analysisSchema,
+      schemaName: "fair_argument_analysis",
+      systemPrompt,
+      userContent: `Analyze this dispute as JSON:\n${JSON.stringify(
+        input,
+        null,
+        2
+      )}`,
+    });
 
     return response.status(200).json({
       source: "openai",
@@ -225,6 +298,46 @@ function readJsonBody(request) {
     });
     request.on("error", reject);
   });
+}
+
+async function requestStructuredAnalysis({
+  schema,
+  schemaName,
+  systemPrompt,
+  userContent,
+}) {
+  const apiResponse = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      input: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: schemaName,
+          strict: true,
+          schema,
+        },
+      },
+    }),
+  });
+
+  const json = await apiResponse.json();
+
+  if (!apiResponse.ok) {
+    const error = new Error(json.error?.message || "Unknown API error.");
+    error.status = apiResponse.status;
+    throw error;
+  }
+
+  return JSON.parse(extractOutputText(json));
 }
 
 function extractOutputText(apiResponse) {

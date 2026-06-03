@@ -1,12 +1,24 @@
 const form = document.querySelector("#analysis-form");
+const patternForm = document.querySelector("#pattern-form");
 const report = document.querySelector("#report");
 const emptyState = document.querySelector("#empty-state");
 const loadSample = document.querySelector("#load-sample");
+const loadPatternSample = document.querySelector("#load-pattern-sample");
+const modeButtons = document.querySelectorAll(".mode-button");
 const testCaseSelect = document.querySelector("#test-case-select");
 const loadTestCase = document.querySelector("#load-test-case");
 const runTestCase = document.querySelector("#run-test-case");
 const expectedBehavior = document.querySelector("#expected-behavior");
 const observedSummary = document.querySelector("#observed-summary");
+
+const patternSample = {
+  reviewType: "single-message",
+  reviewContext: "relationship",
+  reviewText:
+    "You are always twisting things. I only yelled because you kept pushing me. Now you are acting like the victim and making me look abusive. If you really cared, you would stop bringing this up.",
+  reviewNotes:
+    "The person receiving this message felt confused and wondered whether they were being unfair by bringing up hurtful behavior.",
+};
 
 const testCases = [
   {
@@ -120,6 +132,26 @@ loadSample.addEventListener("click", () => {
   buildReport(sample);
 });
 
+loadPatternSample.addEventListener("click", () => {
+  document.querySelector("#review-type").value = patternSample.reviewType;
+  document.querySelector("#review-context").value = patternSample.reviewContext;
+  document.querySelector("#review-text").value = patternSample.reviewText;
+  document.querySelector("#review-notes").value = patternSample.reviewNotes;
+  runPatternReview(patternSample);
+});
+
+modeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setMode(button.dataset.mode);
+  });
+});
+
+patternForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(patternForm).entries());
+  runPatternReview(data);
+});
+
 testCases.forEach((testCase) => {
   const option = document.createElement("option");
   option.value = testCase.id;
@@ -161,6 +193,21 @@ form.addEventListener("submit", (event) => {
   runAnalysis(data);
 });
 
+function setMode(mode) {
+  const isPatternMode = mode === "pattern";
+  form.hidden = isPatternMode;
+  patternForm.hidden = !isPatternMode;
+  emptyState.hidden = false;
+  report.hidden = true;
+  emptyState.textContent = isPatternMode
+    ? "Paste a conversation or one confusing message to generate a private pattern review."
+    : "Enter two arguments or load the sample to generate a structured report.";
+
+  modeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.mode === mode);
+  });
+}
+
 function buildReport(data) {
   const analysis = analyzeLocally(data);
   emptyState.hidden = true;
@@ -186,6 +233,32 @@ async function runAnalysis(data) {
   }
 }
 
+async function runPatternReview(data) {
+  setPatternLoading();
+
+  try {
+    const review = await analyzePatternWithApi(data);
+    renderPatternAnalysis(review, "OpenAI structured pattern review");
+  } catch (error) {
+    const fallback = analyzePatternLocally(data);
+    fallback.apiStatus = `AI endpoint unavailable in this run; showing local prototype fallback. Reason: ${error.message}`;
+    renderPatternAnalysis(fallback, "Local prototype fallback");
+    console.info("Using local pattern fallback:", error.message);
+  }
+}
+
+function setPatternLoading() {
+  emptyState.hidden = true;
+  report.hidden = false;
+  report.innerHTML = `
+    <article class="report-card">
+      <div class="badge-row"><span class="badge">Reviewing</span></div>
+      <h3>Checking communication patterns</h3>
+      <p>Looking for gaslighting-like confusion, blame reversal, contempt, coercive pressure, and healthier ways to interpret the message.</p>
+    </article>
+  `;
+}
+
 function setReportLoading() {
   emptyState.hidden = true;
   report.hidden = false;
@@ -209,13 +282,46 @@ async function analyzeWithApi(data) {
     body: JSON.stringify(data),
   });
 
-  const json = await response.json();
+  const json = await readApiJson(response);
 
   if (!response.ok) {
     throw new Error(json.detail || json.error || "API analysis unavailable.");
   }
 
   return normalizeApiAnalysis(json.analysis);
+}
+
+async function analyzePatternWithApi(data) {
+  if (window.location.protocol === "file:") {
+    throw new Error("API unavailable from file URL.");
+  }
+
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      analysisMode: "pattern_review",
+      ...data,
+    }),
+  });
+
+  const json = await readApiJson(response);
+
+  if (!response.ok) {
+    throw new Error(json.detail || json.error || "API pattern review unavailable.");
+  }
+
+  return json.analysis;
+}
+
+async function readApiJson(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error("API route unavailable in this environment.");
+  }
+
+  return response.json();
 }
 
 function normalizeApiAnalysis(apiAnalysis) {
@@ -284,6 +390,12 @@ function renderAnalysis(analysis, sourceLabel) {
   emptyState.hidden = true;
   report.hidden = false;
   report.innerHTML = renderReport(analysis, sourceLabel);
+}
+
+function renderPatternAnalysis(review, sourceLabel) {
+  emptyState.hidden = true;
+  report.hidden = false;
+  report.innerHTML = renderPatternReport(review, sourceLabel);
 }
 
 function getSelectedTestCase() {
@@ -783,6 +895,181 @@ function renderArgument(title, argument) {
         ${argument.notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
       </ul>
     </article>
+  `;
+}
+
+function analyzePatternLocally(data) {
+  const text = `${data.reviewText || ""} ${data.reviewNotes || ""}`.toLowerCase();
+  const patternDefinitions = [
+    {
+      name: "Blame-shifting",
+      terms: ["i only", "because you", "you made me", "your fault"],
+      explanation:
+        "The message moves responsibility away from the speaker and onto the recipient.",
+    },
+    {
+      name: "DARVO-like reversal",
+      terms: ["acting like the victim", "making me look abusive", "you're the abusive"],
+      explanation:
+        "The message reverses focus from the reported harm to the other person's reaction.",
+    },
+    {
+      name: "Gaslighting-like confusion",
+      terms: ["twisting things", "crazy", "too sensitive", "that never happened"],
+      explanation:
+        "The message may pressure the recipient to distrust their own interpretation.",
+    },
+    {
+      name: "Guilt pressure",
+      terms: ["if you really cared", "after everything", "you would stop"],
+      explanation:
+        "The message uses care, loyalty, or obligation as pressure to end the concern.",
+    },
+    {
+      name: "Contempt or insult",
+      terms: ["stupid", "idiot", "pathetic", "dramatic"],
+      explanation:
+        "The message uses dismissive or degrading language rather than a clear claim.",
+    },
+  ];
+
+  const patterns = patternDefinitions
+    .map((definition) => {
+      const matches = definition.terms.filter((term) => text.includes(term));
+      return matches.length
+        ? {
+            name: definition.name,
+            severity: matches.length > 1 ? "concerning" : "mild",
+            explanation: definition.explanation,
+            examples: matches,
+            possibleImpact:
+              "This can make the recipient feel confused, defensive, or responsible for resolving the speaker's behavior.",
+          }
+        : null;
+    })
+    .filter(Boolean);
+
+  const hasPatterns = patterns.length > 0;
+
+  return {
+    summary:
+      data.reviewType === "single-message"
+        ? "One message was reviewed for communication patterns and possible psychological impact."
+        : "A conversation transcript was reviewed for repeated communication patterns and possible psychological impact.",
+    reviewType: data.reviewType || "conversation",
+    severity: hasPatterns ? "concerning" : "low",
+    patterns,
+    validConcern:
+      "There may be a real concern underneath the message, but a fair concern should be stated with specific behavior, evidence, and accountability.",
+    insultOrArgument: hasPatterns
+      ? "The text contains pressure or invalidating language, so it should not be treated as a clean argument without reframing."
+      : "The text does not show major harmful-pattern flags in the local prototype review.",
+    confusionFactors: hasPatterns
+      ? [
+          "The message mixes a possible concern with blame or invalidation.",
+          "The recipient may feel pushed to defend their character instead of discussing the actual behavior.",
+        ]
+      : ["More context may be needed before identifying a pattern."],
+    saferNextSteps: [
+      "Separate the factual claim from the tone or pressure.",
+      "Ask for one specific behavior, example, or request.",
+      "Do not keep debating if the exchange becomes threatening, degrading, or circular.",
+    ],
+    safetyConsiderations:
+      "If someone monitors your device, accounts, location, or messages, consider using a safer device and trusted support before saving or sharing sensitive transcripts.",
+    confidence: hasPatterns ? "moderate" : "low",
+    unresolvedAssumptions: [
+      "The local prototype cannot verify outside facts.",
+      "A full pattern review is stronger with more conversation history.",
+    ],
+  };
+}
+
+function renderPatternReport(review, sourceLabel = "Local prototype pattern review") {
+  return `
+    <article class="report-card">
+      <div class="badge-row">
+        <span class="badge">${escapeHtml(sourceLabel)}</span>
+        <span class="badge ${review.severity === "urgent" || review.severity === "high" ? "danger" : review.severity === "concerning" ? "warning" : ""}">
+          ${escapeHtml(capitalize(review.severity))} concern
+        </span>
+      </div>
+      <h3>Neutral summary</h3>
+      <p>${escapeHtml(review.summary)}</p>
+      ${
+        review.apiStatus
+          ? `<p class="api-status">${escapeHtml(review.apiStatus)}</p>`
+          : ""
+      }
+    </article>
+
+    <article class="report-card">
+      <h3>Patterns detected</h3>
+      ${
+        review.patterns.length
+          ? `<div class="pattern-list">${review.patterns
+              .map(renderPatternItem)
+              .join("")}</div>`
+          : "<p>No major harmful communication pattern was detected from the available text.</p>"
+      }
+    </article>
+
+    <article class="report-card">
+      <h3>Is it an insult or an argument?</h3>
+      <p>${escapeHtml(review.insultOrArgument)}</p>
+    </article>
+
+    <article class="report-card">
+      <h3>Why it may feel confusing</h3>
+      <ul>${review.confusionFactors
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("")}</ul>
+    </article>
+
+    <article class="report-card">
+      <h3>Possible valid concern</h3>
+      <p>${escapeHtml(review.validConcern)}</p>
+    </article>
+
+    <article class="report-card">
+      <h3>Safer next steps</h3>
+      <ul>${review.saferNextSteps
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("")}</ul>
+    </article>
+
+    <article class="report-card">
+      <div class="badge-row"><span class="badge danger">Privacy and safety</span></div>
+      <h3>Safety considerations</h3>
+      <p>${escapeHtml(review.safetyConsiderations)}</p>
+    </article>
+
+    <article class="report-card">
+      <h3>Unresolved assumptions</h3>
+      <ul>${review.unresolvedAssumptions
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("")}</ul>
+    </article>
+  `;
+}
+
+function renderPatternItem(pattern) {
+  return `
+    <div class="pattern-item">
+      <div class="badge-row">
+        <span class="badge ${pattern.severity === "high" || pattern.severity === "urgent" ? "danger" : pattern.severity === "concerning" ? "warning" : ""}">
+          ${escapeHtml(capitalize(pattern.severity))}
+        </span>
+      </div>
+      <h4>${escapeHtml(pattern.name)}</h4>
+      <p>${escapeHtml(pattern.explanation)}</p>
+      ${
+        pattern.examples.length
+          ? `<p><strong>Examples:</strong> ${escapeHtml(pattern.examples.join("; "))}</p>`
+          : ""
+      }
+      <p>${escapeHtml(pattern.possibleImpact)}</p>
+    </div>
   `;
 }
 
